@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- === 1. Primary Meta Tags === -->
+    <title>Seattle Cherry Blossom Garden | Perennial.im</title>
+    <meta name="title" content="Seattle Cherry Blossom Garden | Perennial.im">
+    <meta name="description" content="An interactive, real-time digital simulation of a Seattle cherry blossom garden, evolving through seasons, day-night cycles, and weather.">
+    <meta name="keywords" content="interactive art, generative art, cherry blossom, seattle, digital garden, real-time simulation, perennial, webgl, javascript">
+    <meta name="author" content="perennial.im (An unearth.im Project)">
+    <meta name="robots" content="index, follow">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="language" content="English">
+
+    <!-- Canonical Link -->
+    <link rel="canonical" href="https://perennial.im/" />
+
+    <!-- === 2. Webmention Endpoint === -->
+    <link rel="webmention" href="https://webmention.io/unearth.im/webmention" />
+
+    <!-- === 3. Open Graph / Facebook === -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://perennial.im/">
+    <meta property="og:title" content="Seattle Cherry Blossom Garden | Perennial.im">
+    <meta property="og:description" content="An interactive, real-time digital simulation of a Seattle cherry blossom garden, evolving through seasons, day-night cycles, and weather.">
+    <meta property="og:image" content="https://perennial.im/og-image.png">
+    <meta property="og:site_name" content="Perennial.im">
+
+    <!-- === 4. Twitter Card === -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://perennial.im/">
+    <meta property="twitter:title" content="Seattle Cherry Blossom Garden | Perennial.im">
+    <meta property="twitter:description" content="An interactive, real-time digital simulation of a Seattle cherry blossom garden, evolving through seasons, day-night cycles, and weather.">
+    <meta property="twitter:image" content="https://perennial.im/og-image.png">
+
+    <!-- === 5. Favicons === -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="alternate icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    <!-- Brand Color Meta Tags -->
+    <meta name="theme-color" content="#4299E1">
+    <meta name="msapplication-TileColor" content="#4A5568">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Georgia', serif;
+        }
+        canvas {
+            display: block;
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            font-size: 14px;
+            z-index: 10;
+        }
+        button {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 8px 16px;
+            margin: 4px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .slider-container {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="range"] {
+            width: 200px;
+            cursor: pointer;
+        }
+        .speed-label {
+            min-width: 80px;
+        }
+        #footer {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            font-size: 14px;
+            z-index: 10;
+        }
+        #footer a {
+            color: white;
+            text-decoration: none;
+        }
+        #footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="info">
+        <div id="season"></div>
+        <div id="time"></div>
+        <div id="weather"></div>
+    </div>
+    <div id="controls">
+        <div id="clickTip">Living Cherry Blossom Garden • Click branches to create blooms</div>
+        <div class="slider-container">
+            <span class="speed-label">Speed: <span id="speedDisplay">1x</span></span>
+            <input type="range" id="speedSlider" min="0" max="6" value="0" step="1">
+        </div>
+        <button onclick="togglePause()">Pause/Resume</button>
+        <button onclick="resetSpeed()">Reset to Real-Time</button>
+    </div>
+    <div id="footer">
+        a digital monument by <a href="https://unearth.im" target="_blank" rel="noopener noreferrer">unearth.im</a>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let W = canvas.width = window.innerWidth;
+        let H = canvas.height = window.innerHeight;
+        
+        window.addEventListener('resize', () => {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+            initScene();
+        });
+
+        // Time system - Real-time (365 days = 1 year)
+        const YEAR_DURATION = 365 * 24 * 60 * 60 * 1000; // 365 days in milliseconds
+        let startTime = Date.now();
+        let timeSpeed = 1;
+        let paused = false;
+        let elapsedTime = 0;
+        
+        // Get current UTC time
+        const now = new Date();
+        const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+
+        // Approximate Seattle time (PST = UTC-8).
+        // NOTE: This will be incorrect during Daylight Saving Time (PDT = UTC-7, roughly March to November).
+        const seattleOffset = -8 * 60 * 60 * 1000;
+        const nowInSeattle = new Date(utcTime + seattleOffset);
+        
+        const startOfYear = new Date(nowInSeattle.getFullYear(), 0, 1);
+        elapsedTime = nowInSeattle.getTime() - startOfYear.getTime();
+
+        // Adjust startTime to correctly reflect the initial state
+        startTime = Date.now() - elapsedTime / timeSpeed;
+
+        function getYearProgress() {
+            if (!paused) {
+                // Update elapsed time based on speed, only if not paused
+                elapsedTime = (Date.now() - startTime) * timeSpeed;
+            }
+            return (elapsedTime % YEAR_DURATION) / YEAR_DURATION;
+        }
+
+        function getDayProgress() {
+            const DAY_IN_MS = 24 * 60 * 60 * 1000;
+            // The progress of the current day is based on the total elapsed time
+            return (elapsedTime % DAY_IN_MS) / DAY_IN_MS;
+        }
+
+        function getSeason(yearProgress) {
+            const dayOfYear = Math.floor(yearProgress * 365);
+            // Using approximate astronomical season start dates for the Northern Hemisphere
+            if (dayOfYear >= 80 && dayOfYear < 172) {
+                return 'spring'; // Mar 21 - Jun 20
+            } else if (dayOfYear >= 172 && dayOfYear < 264) {
+                return 'summer'; // Jun 21 - Sep 21
+            } else if (dayOfYear >= 264 && dayOfYear < 355) {
+                return 'fall';   // Sep 22 - Dec 20
+            } else {
+                return 'winter'; // Dec 21 - Mar 20
+            }
+        }
+
+        // Weather system
+        let weather = {
+            type: 'clear',
+            intensity: 0,
+            changeTimer: 0
+        };
+
+        function updateWeather(season, delta) {
+            weather.changeTimer -= delta;
+            if (weather.changeTimer <= 0) {
+                const rand = Math.random();
+                if (season === 'winter' && rand < 0.3) {
+                    weather.type = 'snow';
+                    weather.intensity = 0.3 + Math.random() * 0.4;
+                } else if ((season === 'spring' || season === 'fall') && rand < 0.4) {
+                    weather.type = 'rain';
+                    weather.intensity = 0.2 + Math.random() * 0.5;
+                } else if (season === 'summer' && rand < 0.15) {
+                    weather.type = 'rain';
+                    weather.intensity = 0.1 + Math.random() * 0.3;
+                } else {
+                    weather.type = 'clear';
+                    weather.intensity = 0;
+                }
+                weather.changeTimer = 5000 + Math.random() * 15000;
+            }
+        }
+
+        // Sky colors
+        function getSkyGradient(dayProgress, season) {
+            const colors = {
+                dawn: { top: '#4A5568', bottom: '#F6AD55' },
+                day: { top: '#4299E1', bottom: '#90CDF4' },
+                dusk: { top: '#7C3AED', bottom: '#F59E0B' },
+                night: { top: '#1A202C', bottom: '#2D3748' }
+            };
+
+            let current;
+            if (dayProgress < 0.25) current = colors.dawn;
+            else if (dayProgress < 0.5) current = colors.day;
+            else if (dayProgress < 0.75) current = colors.dusk;
+            else current = colors.night;
+
+            if (season === 'winter') {
+                current.top = adjustColor(current.top, 0.8);
+                current.bottom = adjustColor(current.bottom, 0.9);
+            }
+
+            return current;
+        }
+
+        function adjustColor(color, factor) {
+            const hex = color.replace('#', '');
+            const r = Math.floor(parseInt(hex.substr(0, 2), 16) * factor);
+            const g = Math.floor(parseInt(hex.substr(2, 2), 16) * factor);
+            const b = Math.floor(parseInt(hex.substr(4, 2), 16) * factor);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        // Ambient wind
+        let windForce = 0;
+        let targetWindForce = 0;
+        let windTimer = 0;
+        let clickBloom = [];
+        
+        function updateWind(delta) {
+            windTimer -= delta;
+            if (windTimer <= 0) {
+                targetWindForce = Math.random() * 0.3;
+                windTimer = 2000 + Math.random() * 3000;
+            }
+            // Smoothly interpolate current wind to the target wind force
+            windForce += (targetWindForce - windForce) * 0.05;
+            targetWindForce *= 0.98; // Gradually reduce the target force for a natural decay
+        }
+        
+        canvas.addEventListener('click', (e) => {
+            const clickX = e.clientX;
+            const clickY = e.clientY;
+            const season = getSeason(getYearProgress());
+            
+            // Only spawn blossoms if clicking near tree branches in spring/summer
+            if (season === 'spring' || season === 'summer') {
+                let nearBranch = false;
+                
+                // Check if click is near any tree
+                trees.forEach(tree => {
+                    const distToTree = Math.sqrt(
+                        Math.pow(clickX - tree.x, 2) + 
+                        Math.pow(clickY - tree.y, 2)
+                    );
+                    
+                    // If click is within tree area (approximate)
+                    if (distToTree < 200 && clickY < H * 0.85) {
+                        nearBranch = true;
+                    }
+                });
+                
+                if (nearBranch) {
+                    clickBloom.push({
+                        x: clickX,
+                        y: clickY,
+                        life: 1,
+                        particles: []
+                    });
+                }
+            }
+        });
+
+        // Particle system (capped for performance)
+        const MAX_PARTICLES = 300;
+
+        class Particle {
+            constructor(x, y, type, season) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = Math.random() * 2 + 1;
+                this.life = 1;
+                this.type = type;
+                this.season = season;
+                this.size = Math.random() * 4 + 2;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.1;
+            }
+
+            update(windX, windY) {
+                this.vx += windX * 0.1;
+                this.vy += windY * 0.05;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.1;
+                this.rotation += this.rotationSpeed;
+                this.life -= 0.002;
+                
+                if (this.y > H) this.life = 0;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                if (this.type === 'blossom') {
+                    // Detailed petal
+                    for (let i = 0; i < 5; i++) {
+                        const angle = (i * Math.PI * 2) / 5 - Math.PI / 2;
+                        ctx.fillStyle = '#FFB7C5';
+                        ctx.beginPath();
+                        ctx.ellipse(
+                            Math.cos(angle) * this.size * 0.5,
+                            Math.sin(angle) * this.size * 0.5,
+                            this.size * 0.4,
+                            this.size * 0.7,
+                            angle,
+                            0,
+                            Math.PI * 2
+                        );
+                        ctx.fill();
+                    }
+                    ctx.fillStyle = '#FFF5BA';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size * 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 'leaf') {
+                    let color = this.season === 'fall' ? 
+                        ['#D97706', '#DC2626', '#F59E0B'][Math.floor(Math.random() * 3)] : 
+                        '#10B981';
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, this.size, this.size * 1.5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 'snow') {
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 'rain') {
+                    ctx.strokeStyle = '#60A5FA';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(0, this.size * 3);
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        let particles = [];
+
+        // Tree structure
+        class Branch {
+            constructor(x, y, angle, depth, maxDepth, season, yearProgress) {
+                this.x = x;
+                this.y = y;
+                this.angle = angle;
+                this.depth = depth;
+                this.maxDepth = maxDepth;
+                this.length = (maxDepth - depth) * 10 + 12;
+                this.thickness = (maxDepth - depth) * 2 + 1;
+                this.season = season;
+                this.yearProgress = yearProgress;
+                this.children = [];
+                this.endX = x + Math.cos(angle) * this.length;
+                this.endY = y + Math.sin(angle) * this.length;
+                
+                if (depth < maxDepth) {
+                    const branches = 2 + Math.floor(Math.random() * 2);
+                    for (let i = 0; i < branches; i++) {
+                        const newAngle = angle + (Math.random() - 0.5) * Math.PI / 3;
+                        this.children.push(new Branch(this.endX, this.endY, newAngle, depth + 1, maxDepth, season, yearProgress));
+                    }
+                }
+            }
+
+            draw(ctx, windForce, lightAngle, shadowColor, animTime) {
+                // Natural wind sway only (no mouse interaction)
+                const sway = Math.sin(animTime * 2 + this.depth * 0.5) * 0.03 + 
+                             Math.sin(animTime * 0.7 + this.x * 0.01) * 0.02;
+                const angleOffset = sway + windForce * 0.1;
+
+                const adjustedEndX = this.x + Math.cos(this.angle + angleOffset) * this.length;
+                const adjustedEndY = this.y + Math.sin(this.angle + angleOffset) * this.length;
+
+                // Gradient lighting on branches
+                let baseColor = '#4A5568';
+                if (this.season === 'spring' && this.depth > 3) {
+                    baseColor = '#6B4423';
+                } else if (this.season === 'summer') {
+                    baseColor = '#4B3621';
+                }
+                
+                const gradient = ctx.createLinearGradient(
+                    this.x, this.y,
+                    adjustedEndX, adjustedEndY
+                );
+                gradient.addColorStop(0, baseColor);
+                gradient.addColorStop(1, adjustColor(baseColor, 0.7));
+
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = this.thickness;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(adjustedEndX, adjustedEndY);
+                ctx.stroke();
+
+                // Draw blossoms or leaves
+                if (this.depth >= this.maxDepth - 1) {
+                    const seed = this.x * 0.1 + this.y * 0.1;
+                    
+                    if (this.season === 'spring' && this.yearProgress > 0.166 && this.yearProgress < 0.25) {
+                        // Simplified blossoms for better performance
+                        ctx.fillStyle = '#FFB7C5';
+                        for (let i = 0; i < 2; i++) {
+                            const bx = adjustedEndX + Math.sin(seed + i) * 15;
+                            const by = adjustedEndY + Math.cos(seed + i) * 15;
+                            ctx.beginPath();
+                            ctx.arc(bx, by, 4, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    } else if (this.season === 'summer' || (this.season === 'spring' && this.yearProgress > 0.25)) {
+                        ctx.fillStyle = this.season === 'fall' ? '#F59E0B' : '#10B981';
+                        for (let i = 0; i < 2; i++) {
+                            const lx = adjustedEndX + Math.sin(seed + i * 2) * 12;
+                            const ly = adjustedEndY + Math.cos(seed + i * 2) * 12;
+                            ctx.beginPath();
+                            ctx.ellipse(lx, ly, 3, 5, seed + i, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                }
+
+                this.children.forEach(child => {
+                    child.x = adjustedEndX;
+                    child.y = adjustedEndY;
+                    child.draw(ctx, windForce, lightAngle, shadowColor, animTime);
+                });
+            }
+        }
+
+        let trees = [];
+
+        function createTree(x, scale, season, yearProgress) {
+            const maxDepth = 7;
+            return new Branch(x, H * 0.85, -Math.PI / 2, 0, maxDepth * scale, season, yearProgress);
+        }
+
+        // Ground flowers
+        class Flower {
+            constructor() {
+                this.x = Math.random() * W;
+                this.y = H * 0.85 + Math.random() * H * 0.08;
+                this.size = Math.random() * 4 + 3;
+                this.petalCount = Math.floor(Math.random() * 2) + 4;
+                this.hue = Math.random() * 60 + 300;
+                this.type = Math.random() < 0.5 ? 'flower' : 'wildflower';
+                this.swayOffset = Math.random() * Math.PI * 2;
+                this.cachedCanvas = null;
+                this.cacheFlower();
+            }
+            
+            cacheFlower() {
+                // Pre-render flower to offscreen canvas
+                const size = this.size * 4;
+                this.cachedCanvas = document.createElement('canvas');
+                this.cachedCanvas.width = size * 2;
+                this.cachedCanvas.height = size * 2;
+                const ctx = this.cachedCanvas.getContext('2d');
+                
+                ctx.translate(size, size * 1.5);
+                
+                // Stem
+                ctx.strokeStyle = '#059669';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, -this.size * 2);
+                ctx.stroke();
+                
+                // Flower
+                if (this.type === 'flower') {
+                    ctx.fillStyle = `hsl(${this.hue}, 70%, 60%)`;
+                    for (let i = 0; i < this.petalCount; i++) {
+                        const angle = (i / this.petalCount) * Math.PI * 2;
+                        ctx.beginPath();
+                        ctx.ellipse(
+                            Math.cos(angle) * this.size * 0.7,
+                            -this.size * 2 + Math.sin(angle) * this.size * 0.7,
+                            this.size * 0.5,
+                            this.size * 0.8,
+                            angle, 0, Math.PI * 2
+                        );
+                        ctx.fill();
+                    }
+                    
+                    ctx.fillStyle = '#FCD34D';
+                    ctx.beginPath();
+                    ctx.arc(0, -this.size * 2, this.size * 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = `hsl(${this.hue}, 70%, 60%)`;
+                    ctx.beginPath();
+                    ctx.arc(0, -this.size * 2, this.size * 0.6, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            draw(ctx, season, animTime) {
+                if ((season === 'spring' || season === 'summer') && this.cachedCanvas) {
+                    const sway = Math.sin(animTime * 1.5 + this.swayOffset) * 2;
+                    ctx.drawImage(
+                        this.cachedCanvas,
+                        this.x + sway - this.size * 2,
+                        this.y - this.size * 3,
+                        this.size * 4,
+                        this.size * 4
+                    );
+                }
+            }
+        }
+
+        let flowers = [];
+        
+        // Grass
+        let grassBlades = [];
+        
+        function initGrass() {
+            grassBlades = [];
+            for (let i = 0; i < 150; i++) {
+                grassBlades.push({
+                    x: Math.random() * W,
+                    y: H * 0.85 + Math.random() * 5,
+                    height: 5 + Math.random() * 10,
+                    swayOffset: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        function drawGrass(ctx, season, animTime) {
+            const color = season === 'winter' ? '#9CA3AF' : '#059669';
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.6;
+            
+            grassBlades.forEach(blade => {
+                const sway = Math.sin(animTime * 2 + blade.swayOffset) * 3;
+                ctx.beginPath();
+                ctx.moveTo(blade.x, blade.y);
+                ctx.quadraticCurveTo(
+                    blade.x + sway * 0.5,
+                    blade.y - blade.height * 0.5,
+                    blade.x + sway,
+                    blade.y - blade.height
+                );
+                ctx.stroke();
+            });
+            
+            ctx.globalAlpha = 1;
+        }
+
+        // Stars and shooting stars
+        let stars = [];
+        let shootingStars = [];
+        
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 100; i++) {
+                stars.push({
+                    x: Math.random() * W,
+                    y: Math.random() * H * 0.6,
+                    size: Math.random() * 2,
+                    twinkle: Math.random()
+                });
+            }
+        }
+
+        function updateShootingStars(dayProgress) {
+            if ((dayProgress > 0.75 || dayProgress < 0.25) && Math.random() < 0.002) {
+                shootingStars.push({
+                    x: Math.random() * W,
+                    y: Math.random() * H * 0.4,
+                    vx: 3 + Math.random() * 3,
+                    vy: 1 + Math.random() * 2,
+                    life: 1,
+                    trail: []
+                });
+            }
+            
+            shootingStars = shootingStars.filter(star => {
+                star.x += star.vx;
+                star.y += star.vy;
+                star.life -= 0.02;
+                
+                star.trail.push({ x: star.x, y: star.y });
+                if (star.trail.length > 20) star.trail.shift();
+                
+                return star.life > 0;
+            });
+        }
+
+        function drawShootingStars(ctx) {
+            shootingStars.forEach(star => {
+                ctx.strokeStyle = `rgba(255, 255, 255, ${star.life})`;
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                star.trail.forEach((pos, i) => {
+                    if (i === 0) ctx.moveTo(pos.x, pos.y);
+                    else ctx.lineTo(pos.x, pos.y);
+                });
+                ctx.stroke();
+                
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.life})`;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        // Mountains
+        function drawMountains(ctx, dayProgress, season) {
+            const skyColors = getSkyGradient(dayProgress, season);
+            
+            // Back mountains
+            ctx.fillStyle = adjustColor(skyColors.top, 0.6);
+            ctx.beginPath();
+            ctx.moveTo(0, H * 0.6);
+            for (let i = 0; i <= W; i += 50) {
+                const y = H * 0.5 + Math.sin(i * 0.003) * 80;
+                ctx.lineTo(i, y);
+            }
+            ctx.lineTo(W, H * 0.6);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Front mountains
+            ctx.fillStyle = adjustColor(skyColors.bottom, 0.5);
+            ctx.beginPath();
+            ctx.moveTo(0, H * 0.7);
+            for (let i = 0; i <= W; i += 40) {
+                const y = H * 0.6 + Math.sin(i * 0.005 + 100) * 60;
+                ctx.lineTo(i, y);
+            }
+            ctx.lineTo(W, H * 0.7);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function initScene() {
+            flowers = [];
+            for (let i = 0; i < 50; i++) {
+                flowers.push(new Flower());
+            }
+            initGrass();
+            initStars();
+        }
+
+        initScene();
+
+        // Controls
+        const speedSlider = document.getElementById('speedSlider');
+        const speedLevels = [1, 10, 100, 1000, 5000, 10000, 50000];
+        
+        speedSlider.addEventListener('input', (e) => {
+            const level = parseInt(e.target.value);
+            timeSpeed = speedLevels[level];
+            startTime = Date.now() - elapsedTime / timeSpeed;
+        });
+        
+        function togglePause() {
+            paused = !paused;
+            if (!paused) {
+                startTime = Date.now() - elapsedTime / timeSpeed;
+            }
+        }
+        
+        function resetSpeed() {
+            timeSpeed = 1;
+            speedSlider.value = 0;
+            startTime = Date.now() - elapsedTime / timeSpeed;
+        }
+
+        // Animation loop
+        let lastTime = performance.now();
+        let lastSeason = '';
+        let animationTime = 0;
+
+        function animate(timestamp) {
+            if (!timestamp) timestamp = performance.now();
+            const delta = timestamp - lastTime;
+            lastTime = timestamp;
+            animationTime += delta * 0.001; // Convert to seconds
+
+            updateWind(delta);
+            
+            const yearProgress = getYearProgress();
+            const dayProgress = getDayProgress();
+            const season = getSeason(yearProgress);
+
+            // Recreate trees when season changes
+            if (season !== lastSeason) {
+                trees = [
+                    createTree(W * 0.3, 1.2, season, yearProgress),
+                    createTree(W * 0.5, 1, season, yearProgress),
+                    createTree(W * 0.7, 0.8, season, yearProgress)
+                ];
+                lastSeason = season;
+            }
+
+            updateWeather(season, delta);
+
+            // Sky
+            const skyColors = getSkyGradient(dayProgress, season);
+            const gradient = ctx.createLinearGradient(0, 0, 0, H);
+            gradient.addColorStop(0, skyColors.top);
+            gradient.addColorStop(1, skyColors.bottom);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, W, H);
+
+            // Stars at night
+            if (dayProgress > 0.75 || dayProgress < 0.25) {
+                stars.forEach(star => {
+                    star.twinkle += 0.05;
+                    const opacity = (Math.sin(star.twinkle) + 1) / 2 * 0.8;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                updateShootingStars(dayProgress);
+                drawShootingStars(ctx);
+            }
+
+            // NEW: Function to draw moving Sun and Moon
+            function drawCelestialObject(ctx, dayProgress) {
+                // dayProgress 0 = midnight, 0.25 = sunrise, 0.5 = noon, 0.75 = sunset
+                const isDay = dayProgress > 0.25 && dayProgress < 0.75;
+
+                // Calculate X position: moves from left to right across the screen
+                // We use a slightly wider range than the screen to allow it to rise and set off-screen
+                const celestialX = (dayProgress * (W + 200)) - 100;
+
+                // Calculate Y position: moves in a sine-wave arc
+                // Math.sin(dayProgress * Math.PI) creates an arc from 0 -> 1 -> 0 between sunrise and sunset
+                const horizonY = H * 0.6; // Where the sun/moon touches the horizon
+                const arcHeight = H * 0.5; // How high the arc goes
+                const celestialY = horizonY - (Math.sin(dayProgress * Math.PI) * arcHeight);
+
+                if (isDay) {
+                    // Draw Sun
+                    ctx.fillStyle = '#FCD34D';
+                    ctx.shadowBlur = 30;
+                    ctx.shadowColor = '#FCD34D';
+                    ctx.beginPath();
+                    ctx.arc(celestialX, celestialY, 40, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // Draw Moon
+                    ctx.fillStyle = '#E2E8F0';
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = '#E2E8F0';
+                    ctx.beginPath();
+                    ctx.arc(celestialX, celestialY, 35, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 0; // Reset shadow
+            }
+            drawCelestialObject(ctx, dayProgress);
+
+            // Mountains
+            drawMountains(ctx, dayProgress, season);
+
+            // Ground
+            ctx.fillStyle = season === 'winter' ? '#CBD5E0' : '#059669';
+            ctx.fillRect(0, H * 0.85, W, H * 0.15);
+
+            // Grass
+            drawGrass(ctx, season, animationTime);
+
+            // Flowers
+            flowers.forEach(f => f.draw(ctx, season, animationTime));
+
+            // Tree shadows
+            const lightAngle = (dayProgress - 0.5) * Math.PI;
+            const shadowColor = `rgba(0, 0, 0, ${0.2 * Math.max(0, Math.sin(dayProgress * Math.PI))})`;
+
+            // Draw trees
+            trees.forEach(tree => {
+                tree.season = season;
+                tree.yearProgress = yearProgress;
+                tree.draw(ctx, windForce, lightAngle, shadowColor, animationTime);
+            });
+
+            windForce *= 0.95;
+
+            // Click bloom effect
+            clickBloom = clickBloom.filter(bloom => {
+                bloom.life -= 0.02;
+                
+                const currentSeason = getSeason(getYearProgress());
+                if (bloom.particles.length < 30 && bloom.life > 0.5 && 
+                    (currentSeason === 'spring' || currentSeason === 'summer')) {
+                    for (let i = 0; i < 3; i++) {
+                        bloom.particles.push(new Particle(bloom.x, bloom.y, 'blossom', currentSeason));
+                    }
+                }
+                
+                return bloom.life > 0;
+            });
+
+            // Particle generation (capped)
+            if (particles.length < MAX_PARTICLES) {
+                if (season === 'spring' && yearProgress > 0.2 && yearProgress < 0.28 && Math.random() < 0.3) {
+                    particles.push(new Particle(W * 0.5 + (Math.random() - 0.5) * 200, H * 0.3, 'blossom', season));
+                }
+                if ((season === 'fall' || season === 'summer') && Math.random() < 0.12) {
+                    particles.push(new Particle(W * 0.5 + (Math.random() - 0.5) * 200, H * 0.3, 'leaf', season));
+                }
+                if (weather.type === 'snow' && Math.random() < weather.intensity * 0.5) {
+                    particles.push(new Particle(Math.random() * W, -10, 'snow', season));
+                }
+                if (weather.type === 'rain' && Math.random() < weather.intensity * 0.5) {
+                    particles.push(new Particle(Math.random() * W, -10, 'rain', season));
+                }
+            }
+
+            // Update and draw particles
+            const windX = windForce * 2;
+            const windY = 0;
+            
+            clickBloom.forEach(bloom => {
+                bloom.particles.forEach(p => {
+                    p.update(windX, windY);
+                    p.draw(ctx);
+                });
+            });
+            
+            particles = particles.filter(p => {
+                p.update(windX, windY);
+                p.draw(ctx);
+                return p.life > 0;
+            });
+
+            // UI
+            document.getElementById('season').textContent = `Season: ${season.charAt(0).toUpperCase() + season.slice(1)}`;
+            const hour = Math.floor(dayProgress * 24);
+            document.getElementById('time').textContent = `Time: ${hour}:00`;
+            document.getElementById('weather').textContent = `Weather: ${weather.type}`;
+            document.getElementById('speedDisplay').textContent = `${timeSpeed}x`;
+            const showTip = season === 'spring' || season === 'summer';
+            document.getElementById('clickTip').style.display = showTip ? 'block' : 'none';
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
