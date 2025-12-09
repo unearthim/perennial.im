@@ -18,6 +18,70 @@
     <!-- === 2. Webmention Endpoint === -->
     <link rel="webmention" href="https://webmention.io/unearth.im/webmention" />
 
+    <!-- === Schema.org JSON-LD === -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": ["VisualArtwork"],
+          "@id": "https://perennial.im/#content",
+          "name": "Seattle Cherry Blossom Garden | Perennial.im",
+          "description": "An interactive, real-time digital simulation of a Seattle cherry blossom garden, evolving through seasons, day-night cycles, and weather.",
+          "url": "https://perennial.im/",
+          "datePublished": "2024-12-01",
+          "artMedium": "Interactive Real-Time Simulation",
+          "artForm": "Digital Monument",
+          "creator": [
+            { "@id": "https://josiest.com/#person" },
+            { "@id": "https://felixvelas.co/#person" }
+          ],
+          "publisher": { "@id": "https://unearth.im/#organization" }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://perennial.im/#website",
+          "url": "https://perennial.im/",
+          "name": "perennial.im",
+          "publisher": { "@id": "https://unearth.im/#organization" }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://unearth.im/#organization",
+          "name": "unearth.im",
+          "url": "https://unearth.im/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://unearth.im/assets/unearth-logo.png"
+          },
+          "sameAs": [
+            "https://twitter.com/unearthim",
+            "https://github.com/unearthim"
+          ],
+          "foundingDate": "2024"
+        },
+        {
+          "@type": "Person",
+          "@id": "https://josiest.com/#person",
+          "name": "Josie Jefferson",
+          "jobTitle": "Digital Archaeologist & Trust Architect",
+          "url": "https://josiest.com/",
+          "sameAs": ["https://notjojo.im"],
+          "affiliation": { "@id": "https://unearth.im/#organization" }
+        },
+        {
+          "@type": "Person",
+          "@id": "https://felixvelas.co/#person",
+          "name": "Felix Velasco",
+          "jobTitle": "Trust Architect & Digital Archaeologist",
+          "url": "https://felixvelas.co/",
+          "sameAs": ["https://www.linkedin.com/in/felix-velasco-b793015"],
+          "affiliation": { "@id": "https://unearth.im/#organization" }
+        }
+      ]
+    }
+    </script>
+
     <!-- === 3. Open Graph / Facebook === -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://perennial.im/">
@@ -131,7 +195,10 @@
         <button onclick="resetSpeed()">Reset to Real-Time</button>
     </div>
     <div id="footer">
-        a digital monument by <a href="https://unearth.im" target="_blank" rel="noopener noreferrer">unearth.im</a>
+        <small>
+            a <b><a href="https://sentientification.com" target="_blank" rel="noopener noreferrer">liminal mind meld</a></b> collaboration:<br>
+            digital monument by <b><a href="https://unearth.im" target="_blank" rel="noopener noreferrer">unearth.im</a></b> | <b><a href="https://archaeobytology.org" target="_blank" rel="noopener noreferrer">archive & anvil</a></b>
+        </small>
     </div>
 
     <script>
