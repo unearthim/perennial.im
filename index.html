@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <!-- === 1. Primary Meta Tags === -->
     <title>Seattle Cherry Blossom Garden | Perennial.im</title>
     <meta name="title" content="Seattle Cherry Blossom Garden | Perennial.im">
-    <meta name="description" content="An interactive, real-time digital simulation of a Seattle cherry blossom garden, evolving through seasons, day-night cycles, and weather.">
-    <meta name="keywords" content="interactive art, generative art, cherry blossom, seattle, digital garden, real-time simulation, perennial, webgl, javascript">
-    <meta name="author" content="perennial.im (An unearth.im Project)">
+    <meta name="description"
+        content="An interactive, real-time digital simulation of a Seattle cherry blossom garden, evolving through seasons, day-night cycles, and weather.">
+    <meta name="keywords"
+        content="interactive art, generative art, cherry blossom, seattle, digital garden, real-time simulation, perennial, webgl, javascript">
+    <meta name="author" content="perennial.im (by unearth heritage foundry - archive & anvil - unearth.im)">
     <meta name="robots" content="index, follow">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="language" content="English">
@@ -48,7 +51,8 @@
         {
           "@type": "Organization",
           "@id": "https://unearth.im/#organization",
-          "name": "unearth.im",
+          "name": "Unearth Heritage Foundry",
+"alternateName": ["Unearth Foundry","Archive & Anvil","Unearth Anvil","Unearth Works","Cultural Infrastructure Foundry"],
           "url": "https://unearth.im/",
           "logo": {
             "@type": "ImageObject",
@@ -86,7 +90,8 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://perennial.im/">
     <meta property="og:title" content="Seattle Cherry Blossom Garden | Perennial.im">
-    <meta property="og:description" content="An interactive, real-time digital simulation of a Seattle cherry blossom garden, evolving through seasons, day-night cycles, and weather.">
+    <meta property="og:description"
+        content="An interactive, real-time digital simulation of a Seattle cherry blossom garden, evolving through seasons, day-night cycles, and weather.">
     <meta property="og:image" content="https://perennial.im/og-image.png">
     <meta property="og:site_name" content="Perennial.im">
 
@@ -94,7 +99,8 @@
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://perennial.im/">
     <meta property="twitter:title" content="Seattle Cherry Blossom Garden | Perennial.im">
-    <meta property="twitter:description" content="An interactive, real-time digital simulation of a Seattle cherry blossom garden, evolving through seasons, day-night cycles, and weather.">
+    <meta property="twitter:description"
+        content="An interactive, real-time digital simulation of a Seattle cherry blossom garden, evolving through seasons, day-night cycles, and weather.">
     <meta property="twitter:image" content="https://perennial.im/og-image.png">
 
     <!-- === 5. Favicons === -->
@@ -112,31 +118,35 @@
             overflow: hidden;
             font-family: 'Georgia', serif;
         }
+
         canvas {
             display: block;
         }
+
         #info {
             position: absolute;
             top: 20px;
             left: 20px;
             color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
             font-size: 16px;
             pointer-events: none;
             z-index: 10;
         }
+
         #controls {
             position: absolute;
             bottom: 20px;
             left: 20px;
             color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
             font-size: 14px;
             z-index: 10;
         }
+
         button {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.4);
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
             color: white;
             padding: 8px 16px;
             margin: 4px;
@@ -144,40 +154,48 @@
             border-radius: 4px;
             font-size: 14px;
         }
+
         button:hover {
-            background: rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.3);
         }
+
         .slider-container {
             margin: 10px 0;
             display: flex;
             align-items: center;
             gap: 10px;
         }
+
         input[type="range"] {
             width: 200px;
             cursor: pointer;
         }
+
         .speed-label {
             min-width: 80px;
         }
+
         #footer {
             position: absolute;
             bottom: 20px;
             right: 20px;
             color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
             font-size: 14px;
             z-index: 10;
         }
+
         #footer a {
             color: white;
             text-decoration: none;
         }
+
         #footer a:hover {
             text-decoration: underline;
         }
     </style>
 </head>
+
 <body>
     <canvas id="canvas"></canvas>
     <div id="info">
@@ -196,18 +214,21 @@
     </div>
     <div id="footer">
         <small>
-            a <b><a href="https://sentientification.com" target="_blank" rel="noopener noreferrer">liminal mind meld</a></b> collaboration:<br>
-            digital monument by <b><a href="https://unearth.im" target="_blank" rel="noopener noreferrer">unearth.im</a></b> | <b><a href="https://archaeobytology.org" target="_blank" rel="noopener noreferrer">archive & anvil</a></b>
+            a <b><a href="https://sentientification.com" target="_blank" rel="noopener noreferrer">liminal mind
+                    meld</a></b> collaboration:<br>
+            digital monument by <b><a href="https://unearth.im" target="_blank"
+                    rel="noopener noreferrer">unearth.im</a></b> | <b><a href="https://archaeobytology.org"
+                    target="_blank" rel="noopener noreferrer">archive & anvil</a></b>
         </small>
     </div>
 
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        
+
         let W = canvas.width = window.innerWidth;
         let H = canvas.height = window.innerHeight;
-        
+
         window.addEventListener('resize', () => {
             W = canvas.width = window.innerWidth;
             H = canvas.height = window.innerHeight;
@@ -220,7 +241,7 @@
         let timeSpeed = 1;
         let paused = false;
         let elapsedTime = 0;
-        
+
         // Get current UTC time
         const now = new Date();
         const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -229,7 +250,7 @@
         // NOTE: This will be incorrect during Daylight Saving Time (PDT = UTC-7, roughly March to November).
         const seattleOffset = -8 * 60 * 60 * 1000;
         const nowInSeattle = new Date(utcTime + seattleOffset);
-        
+
         const startOfYear = new Date(nowInSeattle.getFullYear(), 0, 1);
         elapsedTime = nowInSeattle.getTime() - startOfYear.getTime();
 
@@ -328,7 +349,7 @@
         let targetWindForce = 0;
         let windTimer = 0;
         let clickBloom = [];
-        
+
         function updateWind(delta) {
             windTimer -= delta;
             if (windTimer <= 0) {
@@ -339,29 +360,29 @@
             windForce += (targetWindForce - windForce) * 0.05;
             targetWindForce *= 0.98; // Gradually reduce the target force for a natural decay
         }
-        
+
         canvas.addEventListener('click', (e) => {
             const clickX = e.clientX;
             const clickY = e.clientY;
             const season = getSeason(getYearProgress());
-            
+
             // Only spawn blossoms if clicking near tree branches in spring/summer
             if (season === 'spring' || season === 'summer') {
                 let nearBranch = false;
-                
+
                 // Check if click is near any tree
                 trees.forEach(tree => {
                     const distToTree = Math.sqrt(
-                        Math.pow(clickX - tree.x, 2) + 
+                        Math.pow(clickX - tree.x, 2) +
                         Math.pow(clickY - tree.y, 2)
                     );
-                    
+
                     // If click is within tree area (approximate)
                     if (distToTree < 200 && clickY < H * 0.85) {
                         nearBranch = true;
                     }
                 });
-                
+
                 if (nearBranch) {
                     clickBloom.push({
                         x: clickX,
@@ -398,7 +419,7 @@
                 this.vy += 0.1;
                 this.rotation += this.rotationSpeed;
                 this.life -= 0.002;
-                
+
                 if (this.y > H) this.life = 0;
             }
 
@@ -430,8 +451,8 @@
                     ctx.arc(0, 0, this.size * 0.3, 0, Math.PI * 2);
                     ctx.fill();
                 } else if (this.type === 'leaf') {
-                    let color = this.season === 'fall' ? 
-                        ['#D97706', '#DC2626', '#F59E0B'][Math.floor(Math.random() * 3)] : 
+                    let color = this.season === 'fall' ?
+                        ['#D97706', '#DC2626', '#F59E0B'][Math.floor(Math.random() * 3)] :
                         '#10B981';
                     ctx.fillStyle = color;
                     ctx.beginPath();
@@ -472,7 +493,7 @@
                 this.children = [];
                 this.endX = x + Math.cos(angle) * this.length;
                 this.endY = y + Math.sin(angle) * this.length;
-                
+
                 if (depth < maxDepth) {
                     const branches = 2 + Math.floor(Math.random() * 2);
                     for (let i = 0; i < branches; i++) {
@@ -484,8 +505,8 @@
 
             draw(ctx, windForce, lightAngle, shadowColor, animTime) {
                 // Natural wind sway only (no mouse interaction)
-                const sway = Math.sin(animTime * 2 + this.depth * 0.5) * 0.03 + 
-                             Math.sin(animTime * 0.7 + this.x * 0.01) * 0.02;
+                const sway = Math.sin(animTime * 2 + this.depth * 0.5) * 0.03 +
+                    Math.sin(animTime * 0.7 + this.x * 0.01) * 0.02;
                 const angleOffset = sway + windForce * 0.1;
 
                 const adjustedEndX = this.x + Math.cos(this.angle + angleOffset) * this.length;
@@ -498,7 +519,7 @@
                 } else if (this.season === 'summer') {
                     baseColor = '#4B3621';
                 }
-                
+
                 const gradient = ctx.createLinearGradient(
                     this.x, this.y,
                     adjustedEndX, adjustedEndY
@@ -517,7 +538,7 @@
                 // Draw blossoms or leaves
                 if (this.depth >= this.maxDepth - 1) {
                     const seed = this.x * 0.1 + this.y * 0.1;
-                    
+
                     if (this.season === 'spring' && this.yearProgress > 0.166 && this.yearProgress < 0.25) {
                         // Simplified blossoms for better performance
                         ctx.fillStyle = '#FFB7C5';
@@ -568,7 +589,7 @@
                 this.cachedCanvas = null;
                 this.cacheFlower();
             }
-            
+
             cacheFlower() {
                 // Pre-render flower to offscreen canvas
                 const size = this.size * 4;
@@ -576,9 +597,9 @@
                 this.cachedCanvas.width = size * 2;
                 this.cachedCanvas.height = size * 2;
                 const ctx = this.cachedCanvas.getContext('2d');
-                
+
                 ctx.translate(size, size * 1.5);
-                
+
                 // Stem
                 ctx.strokeStyle = '#059669';
                 ctx.lineWidth = 1;
@@ -586,7 +607,7 @@
                 ctx.moveTo(0, 0);
                 ctx.lineTo(0, -this.size * 2);
                 ctx.stroke();
-                
+
                 // Flower
                 if (this.type === 'flower') {
                     ctx.fillStyle = `hsl(${this.hue}, 70%, 60%)`;
@@ -602,7 +623,7 @@
                         );
                         ctx.fill();
                     }
-                    
+
                     ctx.fillStyle = '#FCD34D';
                     ctx.beginPath();
                     ctx.arc(0, -this.size * 2, this.size * 0.3, 0, Math.PI * 2);
@@ -630,10 +651,10 @@
         }
 
         let flowers = [];
-        
+
         // Grass
         let grassBlades = [];
-        
+
         function initGrass() {
             grassBlades = [];
             for (let i = 0; i < 150; i++) {
@@ -651,7 +672,7 @@
             ctx.strokeStyle = color;
             ctx.lineWidth = 1;
             ctx.globalAlpha = 0.6;
-            
+
             grassBlades.forEach(blade => {
                 const sway = Math.sin(animTime * 2 + blade.swayOffset) * 3;
                 ctx.beginPath();
@@ -664,14 +685,14 @@
                 );
                 ctx.stroke();
             });
-            
+
             ctx.globalAlpha = 1;
         }
 
         // Stars and shooting stars
         let stars = [];
         let shootingStars = [];
-        
+
         function initStars() {
             stars = [];
             for (let i = 0; i < 100; i++) {
@@ -695,15 +716,15 @@
                     trail: []
                 });
             }
-            
+
             shootingStars = shootingStars.filter(star => {
                 star.x += star.vx;
                 star.y += star.vy;
                 star.life -= 0.02;
-                
+
                 star.trail.push({ x: star.x, y: star.y });
                 if (star.trail.length > 20) star.trail.shift();
-                
+
                 return star.life > 0;
             });
         }
@@ -719,7 +740,7 @@
                     else ctx.lineTo(pos.x, pos.y);
                 });
                 ctx.stroke();
-                
+
                 ctx.fillStyle = `rgba(255, 255, 255, ${star.life})`;
                 ctx.beginPath();
                 ctx.arc(star.x, star.y, 2, 0, Math.PI * 2);
@@ -730,7 +751,7 @@
         // Mountains
         function drawMountains(ctx, dayProgress, season) {
             const skyColors = getSkyGradient(dayProgress, season);
-            
+
             // Back mountains
             ctx.fillStyle = adjustColor(skyColors.top, 0.6);
             ctx.beginPath();
@@ -742,7 +763,7 @@
             ctx.lineTo(W, H * 0.6);
             ctx.closePath();
             ctx.fill();
-            
+
             // Front mountains
             ctx.fillStyle = adjustColor(skyColors.bottom, 0.5);
             ctx.beginPath();
@@ -770,20 +791,20 @@
         // Controls
         const speedSlider = document.getElementById('speedSlider');
         const speedLevels = [1, 10, 100, 1000, 5000, 10000, 50000];
-        
+
         speedSlider.addEventListener('input', (e) => {
             const level = parseInt(e.target.value);
             timeSpeed = speedLevels[level];
             startTime = Date.now() - elapsedTime / timeSpeed;
         });
-        
+
         function togglePause() {
             paused = !paused;
             if (!paused) {
                 startTime = Date.now() - elapsedTime / timeSpeed;
             }
         }
-        
+
         function resetSpeed() {
             timeSpeed = 1;
             speedSlider.value = 0;
@@ -802,7 +823,7 @@
             animationTime += delta * 0.001; // Convert to seconds
 
             updateWind(delta);
-            
+
             const yearProgress = getYearProgress();
             const dayProgress = getDayProgress();
             const season = getSeason(yearProgress);
@@ -837,7 +858,7 @@
                     ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
                     ctx.fill();
                 });
-                
+
                 updateShootingStars(dayProgress);
                 drawShootingStars(ctx);
             }
@@ -907,15 +928,15 @@
             // Click bloom effect
             clickBloom = clickBloom.filter(bloom => {
                 bloom.life -= 0.02;
-                
+
                 const currentSeason = getSeason(getYearProgress());
-                if (bloom.particles.length < 30 && bloom.life > 0.5 && 
+                if (bloom.particles.length < 30 && bloom.life > 0.5 &&
                     (currentSeason === 'spring' || currentSeason === 'summer')) {
                     for (let i = 0; i < 3; i++) {
                         bloom.particles.push(new Particle(bloom.x, bloom.y, 'blossom', currentSeason));
                     }
                 }
-                
+
                 return bloom.life > 0;
             });
 
@@ -938,14 +959,14 @@
             // Update and draw particles
             const windX = windForce * 2;
             const windY = 0;
-            
+
             clickBloom.forEach(bloom => {
                 bloom.particles.forEach(p => {
                     p.update(windX, windY);
                     p.draw(ctx);
                 });
             });
-            
+
             particles = particles.filter(p => {
                 p.update(windX, windY);
                 p.draw(ctx);
@@ -967,4 +988,5 @@
         animate();
     </script>
 </body>
+
 </html>
